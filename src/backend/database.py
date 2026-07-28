@@ -18,17 +18,23 @@ def hash_password(password):
     return ph.hash(password)
 
 def init_database():
-    """Initialize database if empty"""
+    """Initialize database with default activities and teachers"""
 
-    # Initialize activities if empty
-    if activities_collection.count_documents({}) == 0:
-        for name, details in initial_activities.items():
-            activities_collection.insert_one({"_id": name, **details})
-            
-    # Initialize teacher accounts if empty
-    if teachers_collection.count_documents({}) == 0:
-        for teacher in initial_teachers:
-            teachers_collection.insert_one({"_id": teacher["username"], **teacher})
+    # Ensure all default activities exist, even if the collection already has data
+    for name, details in initial_activities.items():
+        activities_collection.update_one(
+            {"_id": name},
+            {"$setOnInsert": {"_id": name, **details}},
+            upsert=True
+        )
+
+    # Ensure all default teacher accounts exist, even if the collection already has data
+    for teacher in initial_teachers:
+        teachers_collection.update_one(
+            {"_id": teacher["username"]},
+            {"$setOnInsert": teacher},
+            upsert=True
+        )
 
 # Initial database if empty
 initial_activities = {
@@ -163,6 +169,17 @@ initial_activities = {
         },
         "max_participants": 16,
         "participants": ["william@mergington.edu", "jacob@mergington.edu"]
+    },
+    "Manga Maniacs": {
+        "description": "Explore the fantastic stories of the most interesting characters from Japanese Manga (graphic novels).",
+        "schedule": "Tuesdays, 7:00 PM - 8:00 PM",
+        "schedule_details": {
+            "days": ["Tuesday"],
+            "start_time": "19:00",
+            "end_time": "20:00"
+        },
+        "max_participants": 15,
+        "participants": []
     }
 }
 
